@@ -7,7 +7,7 @@ Shape Analysis Library, no third part library, pure in python.
 * shape descriptors: area, perimeter, roundness, curvature, circularity
 
 ## Examples
-a testing examples in [test.ipynb](test.html). go to the directory and `jupytor notebook`. You need `jupytor` and `numpy` to run examples
+a testing examples in [test.ipynb](test.ipynb). go to the directory and `jupytor notebook`. You need `jupytor` and `numpy` to run examples
 * Bounding Geometry
 ![](fig.png)
 
