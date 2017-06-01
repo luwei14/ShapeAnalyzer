@@ -7,8 +7,8 @@ class Shape():
     
 class Point(Shape):
     def __init__(self, x, y):
-        self.x = x
-        self.y = y
+        self.x = float(x)
+        self.y = float(y)
 
     def __repr__(self):
         return str(self)
@@ -36,17 +36,49 @@ class LineSegment(Shape):
         return "LineSegment ( %s, %s )" % (str(self.fpt), str(self.tpt))
 
     def coords(self):
-        return [self.fpt.coords, self.tpt.coords]
+        return [self.fpt.coords(), self.tpt.coords()]
     
     def length(self):
         return math.hypot(self.fpt.x - self.tpt.x, self.fpt.y - self.tpt.y)
 
-    def distance(self, pt):
+    def height(self, pt):
         v2 = [pt.x - self.fpt.x, pt.y - self.fpt.y]
         v1 = [self.tpt.x - self.fpt.x, self.tpt.y  - self.fpt.y]
         cross = v1[0] * v2[1] - v1[1] * v2[0]
         height = math.fabs(cross) / math.hypot(v1[0], v1[1])
         return height
+    
+    def distance(self, pt):
+        op = Point(self.fpt.x, self.fpt.y)
+        dx, dy = self.tpt.x - op.x, self.tpt.y - op.y
+        
+        ratio = ((pt.x - op.x) * dx + (pt.y - op.y) * dy) / (dx * dx + dy * dy)
+        if ratio > 1:
+            op = self.tpt
+        elif ratio > 0:
+            op.x += ratio * dx
+            op.y += ratio * dy
+        
+        dx = pt.x - op.x
+        dy = pt.y - op.y
+
+        return math.hypot(dx, dy)
+
+    def distance2(self, pt):
+        op = Point(self.fpt.x, self.fpt.y)
+        dx, dy = self.tpt.x - op.x, self.tpt.y - op.y
+        #print self
+        ratio = ((pt.x - op.x) * dx + (pt.y - op.y) * dy) / (dx * dx + dy * dy)
+        if ratio > 1:
+            op = self.tpt
+        elif ratio > 0:
+            op.x += ratio * dx
+            op.y += ratio * dy
+        
+        dx = pt.x - op.x
+        dy = pt.y - op.y
+
+        return dx * dx + dy * dy
 
 class Line(Shape):
     def __init__(self, a, b, c):
@@ -118,7 +150,7 @@ class LineString(Shape):
         return "LineString ( %d points,[%s,..., %s )" % (len(self.points), self.points[0], self.points[len(self.points)-1])
 
     def coords(self):
-        return [p.coords for p in self.points]
+        return [p.coords() for p in self.points]
     
     def length(self):
         length = 0.0
@@ -137,15 +169,17 @@ class Polygon(Shape):
         only simple polygon, no holes
         '''
         self.points = points
+        if self.signarea() < 0:
+            self.reverse()
 
     def __repr__(self):
-        str(self)
+        return str(self)
     
     def __str__(self):
-        return "Polygon ( %d points,[%s,..., %s )" % (len(self.points), self.points[0], self.points[len(self.points)-1])
+        return "Polygon ( %d points,[%s,...,%s] )" % (len(self.points), self.points[0], self.points[len(self.points)-1])
 
     def coords(self):
-        return [p.coords for p in self.points]
+        return [p.coords() for p in self.points]
     
     def perimeter(self):
         length = 0.0
@@ -155,6 +189,9 @@ class Polygon(Shape):
         return length
 
     def area(self):
+        return math.fabs(self.signarea())
+    
+    def signarea(self):
         N = len(self.points)
         area2 = 0.0
         for i in range(N):
@@ -163,3 +200,35 @@ class Polygon(Shape):
             v2 = Vector2(self.points[j].x, self.points[j].y)
             area2 += v1.cross(v2)
         return area2 / 2.0
+    
+    def reverse(self):
+        self.points.reverse()
+
+    def distance(self, pt):
+        '''
+        if pt in polygon, distance is positive, else negtive
+        todo: handle on edge case, pt on vertex, ray got through edge cases
+        '''
+        N = len(self.points)
+        inside = False
+        dis2 = float('inf')
+        for i in range(N):
+            j = (i+1) % N
+            p1, p2 = self.points[i], self.points[j]
+            if ((p1.y > pt.y) is not (p2.y > pt.y)) and pt.x < p1.x + (p2.x - p1.x) * (pt.y - p1.y) / (p2.y - p1.y):
+                inside = not inside
+            dis2 = min(LineSegment(p1, p2).distance2(pt), dis2)
+        return math.sqrt(dis2) if inside else - math.sqrt(dis2)
+
+    def isinside(self, pt):
+        N = len(self.points)
+        print self.coords()
+        inside = False
+        dis2 = float('inf')
+        for i in range(N):
+            j = (i+1) % N
+            p1, p2 = self.points[i], self.points[j]
+            if ((p1.y > pt.y) is not (p2.y > pt.y)) and (pt.x < p1.x + (p2.x - p1.x) * (pt.y - p1.y) / (p2.y - p1.y)):
+                print p1, p2, pt
+                inside = not inside
+        return inside

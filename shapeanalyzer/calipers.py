@@ -58,7 +58,7 @@ class RotatingCaliper():
             lseg = LineSegment(fpt, tpt)
             j = self._antipodals[i][-1]
             pt = self._points[j]
-            td = lseg.distance(pt)
+            td = lseg.height(pt)
             if td < w:
                 w = td
                 support = [fpt, tpt, pt]

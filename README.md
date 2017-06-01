@@ -9,7 +9,7 @@ Shape Analysis Library, no third part library, pure in python.
 ## Examples
 a testing examples in [test.ipynb](test.ipynb). go to the directory and `jupytor notebook`. You need `jupytor` and `numpy` to run examples
 * Bounding Geometry
-![](fig.png)
+![](figures/fig.png)
 
 * Shape Descriptors
 ```python
@@ -28,3 +28,6 @@ print json.dumps(SD.Descriptors(), indent=2)
   "Roundness": 0.641941453101358
 }
 ```
+* Shape Centers
+Python implementation of [polylabel](https://github.com/mapbox/polylabel) by Mapbox
+![](figures/centers.png)

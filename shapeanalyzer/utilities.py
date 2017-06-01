@@ -117,3 +117,77 @@ class GeometryUtility():
             else:
                 support = [support[k1], support[k2], i]
                 return cmin, support
+
+
+class TinyQueue():
+    def __init__(self, data=None, compare=None):
+        self.data = data[:] if data else []
+        self.length = len(self.data)
+        self.compare = compare if compare else self._compare
+        if self.length > 0:
+            i = self.length >> 1
+            while i >= 0:
+                self._down(i)
+                i -= 1
+
+    def _compare(self, a, b):
+        if a < b:
+            return -1
+        elif a > b:
+            return 1
+        else:
+            return 0
+
+    def push(self, item):
+        self.data.append(item)
+        self.length += 1
+        self._up(self.length - 1)
+
+    def pop(self):
+        if self.length == 0:
+            return None
+        top = self.data[0]
+        self.length -= 1
+        if self.length > 0:
+            self.data[0] = self.data[self.length]
+            self._down(0)
+        self.data.pop()
+        return top
+
+    def peek(self):
+        if self.length == 0:
+            return None
+        return self.data[0]
+
+    def _up(self, pos):
+        data = self.data
+        compare = self.compare
+        item = data[pos]
+
+        while pos > 0:
+            pPos = (pos - 1) >> 1
+            cItem = data[pPos]
+            if compare(item, cItem) >= 0:
+                break
+            data[pos] = cItem
+            pos = pPos
+        data[pos] = item
+    
+    def _down(self, pos):
+        data = self.data
+        compare = self.compare
+        item = data[pos]
+        halflen = self.length >> 1
+        while pos < halflen:
+            lpos = (pos << 1) + 1
+            rpos = lpos + 1
+            priorItem = data[lpos]
+            if rpos < self.length and compare(data[rpos], priorItem) < 0:
+                lpos = rpos
+                priorItem = data[rpos]
+
+            if compare(priorItem, item) >= 0:
+                break
+            data[pos] = priorItem
+            pos = lpos
+        data[pos] = item
