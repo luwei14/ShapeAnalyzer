@@ -1,10 +1,10 @@
 import math
 from vectmat import *
- 
+
 class Shape():
     def __init__(self):
         pass
-    
+
 class Point(Shape):
     def __init__(self, x, y):
         self.x = float(x)
@@ -12,7 +12,7 @@ class Point(Shape):
 
     def __repr__(self):
         return str(self)
-    
+
     def __str__(self):
         return "Point ( %s, %s )" % (str(self.x), str(self.y))
 
@@ -23,7 +23,7 @@ class Point(Shape):
     def distance(self, p):
         return math.hypot(self.x - p.x, self.y - p.y)
 
-    
+
 class LineSegment(Shape):
     def __init__(self, fpt, tpt):
         self.fpt = fpt
@@ -31,13 +31,13 @@ class LineSegment(Shape):
 
     def __repr__(self):
         return str(self)
-    
+
     def __str__(self):
         return "LineSegment ( %s, %s )" % (str(self.fpt), str(self.tpt))
 
     def coords(self):
         return [self.fpt.coords(), self.tpt.coords()]
-    
+
     def length(self):
         return math.hypot(self.fpt.x - self.tpt.x, self.fpt.y - self.tpt.y)
 
@@ -47,18 +47,18 @@ class LineSegment(Shape):
         cross = v1[0] * v2[1] - v1[1] * v2[0]
         height = math.fabs(cross) / math.hypot(v1[0], v1[1])
         return height
-    
+
     def distance(self, pt):
         op = Point(self.fpt.x, self.fpt.y)
         dx, dy = self.tpt.x - op.x, self.tpt.y - op.y
-        
+
         ratio = ((pt.x - op.x) * dx + (pt.y - op.y) * dy) / (dx * dx + dy * dy)
         if ratio > 1:
             op = self.tpt
         elif ratio > 0:
             op.x += ratio * dx
             op.y += ratio * dy
-        
+
         dx = pt.x - op.x
         dy = pt.y - op.y
 
@@ -74,11 +74,60 @@ class LineSegment(Shape):
         elif ratio > 0:
             op.x += ratio * dx
             op.y += ratio * dy
-        
+
         dx = pt.x - op.x
         dy = pt.y - op.y
 
         return dx * dx + dy * dy
+
+class Ray(Shape):
+    '''
+    Ray: origin point, direction vector
+    '''
+    def __init__(self, po, dv):
+        self.origin = po
+        self.direction = dv
+    def __repr__(self):
+        return str(self)
+
+    def __str__(self):
+        return "Ray (%s, %s)" % (str(self.origin) , str(self.direction))
+
+    def intersection(self, other):
+        '''
+            p1.x + v1.x * t1 = p2.x + v2.x * t2
+            p1.y + v1.y * t1 = p2.y + v2.y * t2
+                =>
+            v1.x * t1 - v2.x * t2 + (p1.x - p2.x) = 0
+            v1.y * t1 - v2.y * t2 + (p1.y - p2.y) = 0
+                =>
+            --           --  --  --     --           --
+            | v1.x  -v2.x |  | t1 |     | p2.x - p1.x |
+            |             |  |    |  =  |             |
+            | v1.y  -v2.y |  | t2 |     | p2.y - p1.y |
+            --           --  --  --     --           --
+                =>
+            A*x = B
+        '''
+        a = self.direction.x
+        b = -other.direction.x
+        c = self.direction.y
+        d = -other.direction.y
+        beta1 = -self.origin.x + other.origin.x
+        beta2 = -self.origin.y + other.origin.y
+        det = a * d - b * c
+        if det == 0:
+            print "parallel"
+            return None
+
+        inva, invb, invc, invd = d/det, -b/det, -c/det, a/det
+        t1 = inva * beta1 + invb * beta2
+        t2 = invc * beta1 + invd * beta2
+        if t1 < 0 or t2 < 0:
+            return "no inter"
+            return None
+
+        return Point(self.origin.x + a * t1, self.origin.y + c * t1)
 
 class Line(Shape):
     def __init__(self, a, b, c):
@@ -91,7 +140,7 @@ class Line(Shape):
 
     def __repr__(self):
         return str(self)
-    
+
     def __str__(self):
         return "Line ( %sx + %sx + %s = 0 )" % (str(self.A), str(self.B), str(self.C))
 
@@ -105,7 +154,7 @@ class Circle(Shape):
 
     def __repr__(self):
         return str(self)
-    
+
     def __str__(self):
         return "Circle ( Center: %s, Radius: %s )" % (str(self.center), str(self.radius))
 
@@ -126,7 +175,7 @@ class Rectangle(Shape):
 
     def __repr__(self):
         return str(self)
-    
+
     def __str__(self):
         return "Rectangle ( Center: %s, Axes: %s, Extents: %s )" % (str(self.center), str(self.axes), str(self.extents))
 
@@ -145,17 +194,17 @@ class LineString(Shape):
 
     def __repr__(self):
         str(self)
-    
+
     def __str__(self):
         return "LineString ( %d points,[%s,..., %s )" % (len(self.points), self.points[0], self.points[len(self.points)-1])
 
     def coords(self):
         return [p.coords() for p in self.points]
-    
+
     def length(self):
         length = 0.0
         N = len(self.points)
-        for i in range(N-1):       
+        for i in range(N-1):
             length += self.points[i].distance(self.points[i+1])
         return length
 
@@ -174,23 +223,23 @@ class Polygon(Shape):
 
     def __repr__(self):
         return str(self)
-    
+
     def __str__(self):
         return "Polygon ( %d points,[%s,...,%s] )" % (len(self.points), self.points[0], self.points[len(self.points)-1])
 
     def coords(self):
         return [p.coords() for p in self.points]
-    
+
     def perimeter(self):
         length = 0.0
         N = len(self.points)
-        for i in range(N):       
+        for i in range(N):
             length += self.points[i].distance(self.points[(i+1) % N])
         return length
 
     def area(self):
         return math.fabs(self.signarea())
-    
+
     def signarea(self):
         N = len(self.points)
         area2 = 0.0
@@ -200,7 +249,7 @@ class Polygon(Shape):
             v2 = Vector2(self.points[j].x, self.points[j].y)
             area2 += v1.cross(v2)
         return area2 / 2.0
-    
+
     def reverse(self):
         self.points.reverse()
 
