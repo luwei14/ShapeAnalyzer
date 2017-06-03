@@ -23,7 +23,7 @@ class Vector2:
     def normalize(self):
         length = math.hypot(self.x , self.y)
         if length == 0:
-            return
+            return self
         self.x = self.x / length
         self.y = self.y / length
         return self
