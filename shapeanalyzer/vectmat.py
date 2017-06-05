@@ -12,7 +12,15 @@ class Vector2:
         return "Vector2 (%.2lf, %.2lf)" % (self.x, self.y)
 
     def __add__(self, v):
-        return Vector2(self.x+v.x, self.y+v.y)
+        return Vector2(self.x + v.x, self.y + v.y)
+
+    def __sub__(self, v):
+        return Vector2(self.x - v.x, self.y - v.y)
+
+    def __neg__(self):
+        self.x = -self.x
+        self.y = -self.y
+        return self
 
     def dot(self, v):
         return self.x * v.x + self.y * v.y

@@ -80,6 +80,9 @@ class LineSegment(Shape):
 
         return dx * dx + dy * dy
 
+    def vector(self):
+        return Vector2(self.tpt.x - self.fpt.x, self.tpt.y - self.fpt.y)
+
 class Ray(Shape):
     '''
     Ray: origin point, direction vector
@@ -117,35 +120,98 @@ class Ray(Shape):
         beta2 = -self.origin.y + other.origin.y
         det = a * d - b * c
         if det == 0:
-            print "parallel"
+            #print "parallel"
             return None
 
         inva, invb, invc, invd = d/det, -b/det, -c/det, a/det
         t1 = inva * beta1 + invb * beta2
         t2 = invc * beta1 + invd * beta2
         if t1 < 0 or t2 < 0:
-            return "no inter"
+            #print "no inter"
             return None
 
         return Point(self.origin.x + a * t1, self.origin.y + c * t1)
 
 class Line(Shape):
-    def __init__(self, a, b, c):
+    def __init__(self, pt, direction):
         '''
-        line : A * x + B * y + C = 0
+        line : a point and direction Vector2
         '''
-        self.A = a
-        self.B = b
-        self.C = c
+        self.origin = pt
+        self.direction = direction
 
     def __repr__(self):
         return str(self)
 
     def __str__(self):
-        return "Line ( %sx + %sx + %s = 0 )" % (str(self.A), str(self.B), str(self.C))
+        return "Line (%s, %s)" % (str(self.origin) , str(self.direction))
 
-    def parameters(self):
-        return [self.A, self.B, self.C]
+    def intersection(self, other):
+        '''
+            p1.x + v1.x * t1 = p2.x + v2.x * t2
+            p1.y + v1.y * t1 = p2.y + v2.y * t2
+                =>
+            v1.x * t1 - v2.x * t2 + (p1.x - p2.x) = 0
+            v1.y * t1 - v2.y * t2 + (p1.y - p2.y) = 0
+                =>
+            --           --  --  --     --           --
+            | v1.x  -v2.x |  | t1 |     | p2.x - p1.x |
+            |             |  |    |  =  |             |
+            | v1.y  -v2.y |  | t2 |     | p2.y - p1.y |
+            --           --  --  --     --           --
+                =>
+            A*x = B
+        '''
+        a = self.direction.x
+        b = -other.direction.x
+        c = self.direction.y
+        d = -other.direction.y
+        beta1 = -self.origin.x + other.origin.x
+        beta2 = -self.origin.y + other.origin.y
+        det = a * d - b * c
+        if det == 0:
+            #print "parallel"
+            return None
+
+        inva, invb, invc, invd = d/det, -b/det, -c/det, a/det
+        t1 = inva * beta1 + invb * beta2
+        t2 = invc * beta1 + invd * beta2
+
+        return Point(self.origin.x + a * t1, self.origin.y + c * t1)
+
+    def intersection_ray(self, other):
+        '''
+            p1.x + v1.x * t1 = p2.x + v2.x * t2
+            p1.y + v1.y * t1 = p2.y + v2.y * t2
+                =>
+            v1.x * t1 - v2.x * t2 + (p1.x - p2.x) = 0
+            v1.y * t1 - v2.y * t2 + (p1.y - p2.y) = 0
+                =>
+            --           --  --  --     --           --
+            | v1.x  -v2.x |  | t1 |     | p2.x - p1.x |
+            |             |  |    |  =  |             |
+            | v1.y  -v2.y |  | t2 |     | p2.y - p1.y |
+            --           --  --  --     --           --
+                =>
+            A*x = B
+        '''
+        a = self.direction.x
+        b = -other.direction.x
+        c = self.direction.y
+        d = -other.direction.y
+        beta1 = -self.origin.x + other.origin.x
+        beta2 = -self.origin.y + other.origin.y
+        det = a * d - b * c
+        if det == 0:
+            #print "parallel"
+            return None
+
+        inva, invb, invc, invd = d/det, -b/det, -c/det, a/det
+        t1 = inva * beta1 + invb * beta2
+        t2 = invc * beta1 + invd * beta2
+        if t2 < 0:
+            return None
+        return Point(self.origin.x + a * t1, self.origin.y + c * t1)
 
 class Circle(Shape):
     def __init__(self, center, radius):
