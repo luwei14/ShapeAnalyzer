@@ -9,16 +9,20 @@ class StraightSkeleton:
         lav = _LAV()
         lav.form_points(self.poly.points)
         slav = [lav]
+        for inter in self.poly.inters:
+            tlav = _LAV()
+            slav.append(tlav.form_points(inter))
         vetQue = TinyQueue(compare=lambda a,b: a.dis - b.dis)
         for lav in slav:
             for v in lav:
-                #print v.is_reflex
-                vetQue.push(v.event(lav))
+                e = v.event(lav)
+                if e:
+                    vetQue.push(e)
         skeles =[]
         while vetQue.length:
             evt = vetQue.pop()
             if evt.type == 0:
-                if evt.Va.processed and evt.Vb.processed:
+                if evt.Va.processed or evt.Vb.processed:
                     continue
                 # peaks
                 if evt.Va.prev.prev == evt.Vb:
@@ -34,7 +38,6 @@ class StraightSkeleton:
                 skeles.append([evt.inter, evt.Vb.pt])
                 evt.Va.processed = True
                 evt.Vb.processed = True
-                
                 nVet = _Vertex(evt.inter, evt.Va.pedge, evt.Vb.nedge)
                 evt.Va.prev.next = nVet
                 evt.Vb.next.prev = nVet
@@ -45,6 +48,7 @@ class StraightSkeleton:
                     vetQue.push(nevt)
 
             if evt.type == 1:
+                print "reflex"
                 if evt.Vs.processed:
                     continue
                 '''
@@ -70,7 +74,7 @@ class StraightSkeleton:
                 V2.prev = evt.Vx
                 evt.Vs.next.prev = V2
                 evt.Vx.next = V2
-                
+                # split,  maintain the chain
                 for d in vetQue.data:
                     if d.type == 0:
                         continue
@@ -78,7 +82,20 @@ class StraightSkeleton:
                         d.Vx = V2
                     if d.Vx == evt.Vs.prev and d.Vy == evt.Vs:
                         d.Vy = V1
-                
+
+                    if d.Vx == evt.Vx and d.Vy == evt.Vy:
+                        pos = d.Vs.next
+                        isx = 0
+                        while pos != d.Vs:
+                            if pos == evt.Vx:
+                                isy = 1
+                                break
+                            pos = pos.next
+                        if isy:
+                            d.Vy = V2
+                        else:
+                            d.Vx = V1
+
                 v1Evt = V1.near_bi()
                 if v1Evt:
                     vetQue.push(v1Evt)
@@ -116,7 +133,7 @@ class _Vertex:
         #print self.is_reflex
         bv = -self.pedge.vector().normalize() + self.nedge.vector().normalize()
         self.bisector = Ray(self.pt,-bv.normalize()) if self.is_reflex else Ray(self.pt,bv.normalize())
-        self.processed=False
+        self.processed = False
 
     def near_bi(self):
         b = self.bisector
@@ -129,14 +146,14 @@ class _Vertex:
         if pdis == float("inf") and ndis == float("inf"):
             #print "all no inter"
             return None
-        
+
         if pdis < ndis:
             evt_edge = _Event({"inter":pi, "Va":self.prev, "Vb":self, "dis":pdis,"type":0})
             return evt_edge
         else:
             evt_edge = _Event({"inter":ni, "Va":self, "Vb":self.next, "dis":ndis,"type":0})
             return evt_edge
-        
+
     def event(self, lav):
         evts = TinyQueue(compare=lambda a, b: a.dis - b.dis)
         # split event
@@ -154,7 +171,13 @@ class _Vertex:
                 p0 = l1.intersection_ray(l2)
                 p1 = l1.intersection_ray(l3)
                 if p0 and p1:
-                    cpt = Point((p0.x+p1.x+self.pt.x)/3.0, (p0.y+p1.y+self.pt.y)/3.0)
+                    a = p0.distance(p1)
+                    b = p1.distance(self.pt)
+                    c = p0.distance(self.pt)
+                    cx = (a * self.pt.x + b * p0.x + c * p1.x) / (a + b + c)
+                    cy = (a * self.pt.y + b * p0.y + c * p1.y) / (a + b + c)
+                    cpt = Point(cx, cy)
+                    #cpt = Point((p0.x+p1.x+self.pt.x)/3.0, (p0.y+p1.y+self.pt.y)/3.0)
                     tedge = edge.vector().cross(Vector2(cpt.x - edge.fpt.x, cpt.y - edge.fpt.y)) > 0
                     tbi = bi.direction.cross(Vector2(cpt.x - bi.origin.x, cpt.y - bi.origin.y)) < 0
                     tbj = bj.direction.cross(Vector2(cpt.x - bj.origin.x, cpt.y - bj.origin.y)) > 0
@@ -173,16 +196,16 @@ class _Vertex:
             evt_edge = _Event({"inter":pi, "Va":self.prev, "Vb":self, "dis":pdis,"type":0})
             evts.push(evt_edge)
         if ni:
-            ndis = self.nedge.height(ni) if ni else float("inf")
+            ndis = self.nedge.height(ni)
             evt_edge = _Event({"inter":ni, "Va":self, "Vb":self.next, "dis":ndis,"type":0})
             evts.push(evt_edge)
-        return evts.pop()
+        return evts.peek()
 
 class _Event:
     def __init__(self, params):
         for k, v in params.items():
             setattr(self, k, v)
-    
+
 class _LAV:
     def __init__(self):
         self.head = None
@@ -207,6 +230,7 @@ class _LAV:
                 vt.prev = self.head.prev
                 vt.prev.next = vt
                 self.head.prev = vt
+        return self
 
     def __iter__(self):
         pos = self.head

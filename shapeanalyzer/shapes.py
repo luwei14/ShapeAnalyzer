@@ -279,11 +279,12 @@ class LineRing(Shape):
         pass
 
 class Polygon(Shape):
-    def __init__(self, points):
+    def __init__(self, points, inters=[]):
         '''
         only simple polygon, no holes
         '''
         self.points = points
+        self.inters = inters
         if self.signarea() < 0:
             self.reverse()
 
