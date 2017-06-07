@@ -13,9 +13,10 @@ class StraightSkeleton:
             tlav = _LAV()
             slav.append(tlav.form_points(inter))
         vetQue = TinyQueue(compare=lambda a,b: a.dis - b.dis)
-        for lav in slav:
-            for v in lav:
-                e = v.event(lav)
+        for lav1 in slav:
+            for v in lav1:
+                #print v.pt, v.prev.pt, v.next.pt, v.is_reflex, v.bisector
+                e = v.event(lav1)
                 if e:
                     vetQue.push(e)
         skeles =[]
