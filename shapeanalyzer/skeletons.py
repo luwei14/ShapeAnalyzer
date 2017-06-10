@@ -89,10 +89,10 @@ class StraightSkeleton:
                         isx = 0
                         while pos != d.Vs:
                             if pos == evt.Vx:
-                                isy = 1
+                                isx = 1
                                 break
                             pos = pos.next
-                        if isy:
+                        if isx:
                             d.Vy = V2
                         else:
                             d.Vx = V1
